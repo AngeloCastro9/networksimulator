@@ -4,9 +4,9 @@ from application import testapp
 from network import unreliable
 from transport import reliable
 
-NUM_PACKETS = 5
+NUM_PACKETS = 3
 ERROR_PROBABILITY = 0.5
-LOSS_PROBABILITY = 0
+LOSS_PROBABILITY = 0.5
 
 ADDR_A = ('127.0.0.1', 5555)
 ADDR_B = ('127.0.0.1', 6666)

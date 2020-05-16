@@ -3,7 +3,7 @@ from network.unreliable import UnreliableDataTransfer
 from transport import checksum
 import time
 
-ACK = False
+ACK = True
 Loop = 0
 PacketNumber = 0
 
@@ -15,40 +15,36 @@ class ReliableDataTransfer:
         self.udt = udt
 
     def send(self, payload):
-        global ACK,Loop, PacketNumber
+        global ACK, Loop, PacketNumber
         packet = Packet({'payload': payload})
-        packet.set_field("Pacote", PacketNumber)
+        packet.set_field('Pacote', PacketNumber)
         checksum.calculate_checksum(packet)
+        valid = checksum.validate_checksum(packet)
         self.udt.send(packet)
 
-        while(ACK == False):
-            if(ACK == False):
-                Loop += 1
-                if(ACK == True):
-                    break
-                if(Loop == 10):
-                    print("Resend packet - timeout")
-                    print(packet)
+        while ACK is True:
+            Loop += 1
+            if Loop == 10:
+                print("Resend packet - timeout")
+                if valid and packet is not None:
+                    ACK = False
                     self.udt.send(packet)
-                    Loop = 0
-                time.sleep(1)
-            else:
-                break
-        ACK = False
+                Loop = 0
+            time.sleep(1)
+        ACK = True
         PacketNumber = PacketNumber + 1
         Loop = 0
 
     def receive(self):
         global ACK
-        packet = self.udt.receive(timeout=100)
-        if(packet is None):
+        packet = self.udt.receive(timeout=800)
+        valid = checksum.validate_checksum(packet)
+        if packet is None:
             print("Lost packet")
             return
         else:
-            ACK = True
-        valid = checksum.validate_checksum(packet)
+            ACK = False
         if valid:
             return packet.get_field('payload')
         else:
-            print(packet)
             print("invalid checksum")
